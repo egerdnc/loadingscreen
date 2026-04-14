@@ -1,0 +1,372 @@
+/* =========================
+   Variables / Reset
+========================= */
+:root{
+  --bg:#0b0f19;
+  --text:#e7eefc;
+  --muted:rgba(231,238,252,.70);
+  --muted2:rgba(231,238,252,.45);
+
+  --glass: rgba(10,14,24,.48);
+  --glassBorder: rgba(231,238,252,.10);
+
+  --teal: rgba(140,255,255,.85);
+
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+}
+
+html,body{
+  height:100%;
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  overflow:hidden;
+}
+
+/* =========================
+   Background video + overlays
+========================= */
+#bg{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  background:#000;
+  z-index:0;
+  filter:saturate(.95) contrast(1.05);
+}
+
+.vignette{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+  background:
+    radial-gradient(70% 70% at 50% 45%, rgba(0,0,0,.10), rgba(0,0,0,.35)),
+    linear-gradient(to bottom, rgba(0,0,0,.06), rgba(0,0,0,.25));
+}
+
+.scanlines{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:2;
+  opacity:.14;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,.025) 0px,
+      rgba(255,255,255,.025) 1px,
+      transparent 2px,
+      transparent 4px
+    );
+  animation: scanDrift 6s linear infinite;
+}
+
+@keyframes scanDrift{
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(6px); }
+}
+
+/* =========================
+   HUD container, terminal inherits style
+========================= */
+.wrap{
+  position:fixed;
+  inset:0;
+  z-index:3; /* above overlays */
+  pointer-events:none; /* HUD is not interactive */
+}
+
+.card{
+  position:fixed;
+  left:32px;
+  bottom:32px;
+
+  width:calc(100vw - 64px);
+  max-width:900px;
+
+  border-radius:16px;
+  padding:30px 20px 30px;
+
+  overflow:hidden;
+  background:
+      repeating-linear-gradient(
+      to right,
+      rgba(255,255,255,.02) 0px,
+      rgba(255,255,255,.02) 1px,
+      transparent 2px,
+      transparent 12px
+    ),
+
+    linear-gradient(
+      to bottom,
+      rgba(255,255,255,.06),
+      transparent 22%
+    ),
+        radial-gradient(
+      120% 120% at 50% 40%,
+      rgba(0,0,0,0) 40%,
+      rgba(0,0,0,.35) 100%
+    ),
+
+    /* fine horizontal scanlines */
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,.035) 0px,
+      rgba(255,255,255,.035) 1px,
+      transparent 2px,
+      transparent 4px
+    ),
+
+    /* teal terminal bloom */
+    radial-gradient(
+      140% 160% at 30% 40%,
+      rgba(140,255,255,.26) 0%,
+    rgba(90,220,230,.12) 40%,
+      rgba(0,0,0,.68) 70%,
+      rgba(0,0,0,.82) 100%
+    ),
+
+    /* glass base */
+    linear-gradient(
+      135deg,
+      rgba(0,18,24,.68),
+      rgba(0,0,0,.78)
+    );
+
+  border: 1px solid rgba(231,238,252,.12);
+  outline: 1px solid rgba(140,255,255,.08);
+  outline-offset: -6px;
+  box-shadow:
+  0 16px 60px rgba(0,0,0,.35),
+  inset 0 1px 0 rgba(255,255,255,.06),
+  inset 0 -12px 24px rgba(0,0,0,.35);
+
+  filter: saturate(1.05) contrast(1.03);
+  box-shadow:
+    0 16px 60px rgba(0,0,0,.40),
+    0 0 0 1px rgba(140,255,255,.06),
+    0 0 30px rgba(140,255,255,.08);
+}
+
+/* =========================
+   Terminal core
+========================= */
+
+.terminal{
+  color: rgba(231,238,252,.92);
+  overflow:hidden;
+
+  font-family: var(--font-mono);
+  font-weight: 400;
+  letter-spacing: .04em; /* subtle; adjust 0.02–0.08 */
+}
+
+.termContent{
+  position:relative;
+  z-index:2;
+}
+
+/* =========================
+   Frame images
+========================= */
+.terminal__frameTop,
+.terminal__frameBottom{
+  position:absolute;
+  left:2px;
+  right:-8px;
+  height:60px;
+  pointer-events:none;
+  opacity:.30;
+  background-repeat:no-repeat;
+  background-size:100% 100%;
+  z-index:3;
+}
+
+.terminal__frameTop{
+  top:0;
+  background-image:url("assets/bordertop.png");
+}
+
+.terminal__frameBottom{
+  bottom:0;
+  background-image:url("assets/borderbottom.png");
+}
+
+/* =========================
+   Right-side number rain
+========================= */
+.terminal__rain{
+  position:absolute;
+  top:30px;
+  bottom:30px;
+  right:14px;
+  width:220px;
+
+  pointer-events:none;
+  z-index:3;
+
+  opacity:.22;
+  overflow:hidden;
+
+  border-left:1px solid rgba(231,238,252,.10);
+  padding-left:12px;
+}
+
+.terminal__rain pre{
+  margin:0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size:11px;
+  line-height:12px;
+  letter-spacing:.12em;
+  color: rgba(140,255,255,.95);
+  white-space:pre;
+}
+
+/* mask fade is optional; CEF may ignore it. keep it behind @supports */
+@supports ((mask-image: linear-gradient(#000, transparent)) or (-webkit-mask-image: linear-gradient(#000, transparent))) {
+  .terminal__rain{
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+  }
+}
+
+/* =========================
+   Sweep shimmer
+========================= */
+.terminal__scan{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+  opacity:.14;
+}
+
+@supports (background: linear-gradient(to right, transparent, #fff, transparent)) {
+  .terminal__scan{
+    left:-30%;
+    top:0;
+    width:30%;
+    height:100%;
+    background: linear-gradient(to right, transparent, rgba(140,255,255,.45), transparent);
+    transform: skewX(-18deg);
+    animation: terminalSweep 4.2s linear infinite;
+  }
+
+  @keyframes terminalSweep{
+    0%   { transform: translateX(-10%) skewX(-18deg); }
+    100% { transform: translateX(460%) skewX(-18deg); }
+  }
+}
+
+/* =========================
+   Text blocks
+========================= */
+/* headers / labels → UI font */
+.terminal__sub,
+.terminal__label,
+.kv .k,
+.terminal__bulletin .k{
+  font-family: var(--font-ui);
+  letter-spacing:.14em;
+}
+
+/* values / status → mono font */
+.kv .v,
+.terminal__status,
+.terminal__rain pre{
+  font-family: var(--font-mono);
+}
+
+
+.terminal__sub{
+  font-size:8px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color: rgba(231,238,252,.35);
+  margin-bottom:2px;
+}
+
+.terminal__top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin: 2px 0 10px;
+}
+
+.terminal__label{
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color: rgba(231,238,252,.60);
+}
+
+.terminal__grid{
+  display:grid;
+  grid-template-columns: 0.8fr 1fr;
+  gap:6px 12px;
+  margin-bottom:18px;
+}
+
+.kv .k{
+  font-size:10px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color: rgba(231,238,252,.42);
+  margin-bottom:4px;
+}
+
+.kv .v{
+  font-size:12px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color: rgba(231,238,252,.92);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.terminal__bulletin .k{
+  font-size:10px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color: rgba(231,238,252,.42);
+  margin-bottom:4px;
+}
+
+.terminal__status{
+  font-size:13px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color: rgba(231,238,252,.96);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.terminal__requirement{
+  margin-top:6px;
+  font-size:11px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color: rgba(231,238,252,.76);
+  white-space:normal;
+}
+
+.terminal__mark{
+  position:absolute;
+  right:250px;
+  bottom:35px;
+  width:120px;
+  height:auto;
+  opacity:.30;
+  pointer-events:none;
+  user-select:none;
+  z-index:3;
+}
+

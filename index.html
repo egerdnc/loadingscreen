@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Loading…</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Background video -->
+  <video id="bg" preload="auto"></video>
+  <audio id="bgm" preload="auto"></audio>
+
+  <!-- Vignette overlay -->
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <!-- Bottom-aligned HUD -->
+  <main class="wrap">
+    <section class="card terminal" role="status" aria-live="polite">
+      <!-- terminal visual layers -->
+      <div class="terminal__scan" aria-hidden="true"></div>
+      <div class="terminal__frameTop" aria-hidden="true"></div>
+      <div class="terminal__frameBottom" aria-hidden="true"></div>
+
+      <!-- right-side number pool -->
+      <div class="terminal__rain" aria-hidden="true">
+        <pre id="rain"></pre>
+      </div>
+      <div class="terminal__sub">URBAN NODE · CITY 77 · VLADIVOSTOK</div>
+      <img class="terminal__mark" src="assets/Advisor_pod_logo.png" alt="" aria-hidden="true">
+      <div class="terminal__sub">RESOURCE PROCESSING NODE · RES-77R</div>
+      
+      <div class="termContent">
+      <!-- header -->
+      <header class="terminal__top">
+        <div class="terminal__label">UU.TERMINAL.77-OVR-4E92A-CIV</div>
+      </header>
+    
+      <!-- info grid -->
+      <div class="terminal__grid">
+        <div class="kv">
+          <div class="k">UPLINK-ID</div>
+          <div id="node" class="v">—</div>
+        </div>
+      
+        <div class="kv">
+          <div class="k">SECTOR GRID</div>
+          <div id="sector" class="v">—</div>
+        </div>
+      
+        <div class="kv">
+          <div class="k">MODE</div>
+          <div id="mode" class="v">—</div>
+        </div>
+      
+        <div class="kv">
+          <div class="k">THRESHOLD</div>
+          <div id="cap" class="v">—</div>
+        </div>
+      </div>
+
+      <!-- bulletin line -->
+      <div class="terminal__bulletin">
+        <div class="k">BULLETIN</div>
+        <div id="status" class="terminal__status">
+          CONNECTION INITIALIZATION…
+        </div>
+        <div class="terminal__requirement">
+          REQUIREMENT: CLIENT MUST USE GMOD X86-64 CHROMIUM BETA.
+        </div>
+      </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

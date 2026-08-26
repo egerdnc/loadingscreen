@@ -172,7 +172,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 72vw;
+  max-width: 24vw;
 }
 
 .card {
@@ -257,7 +257,6 @@ body {
   letter-spacing: 0.16em;
   text-indent: 0.16em;
   background: var(--red);
-  transform: rotate(-3deg);
   opacity: 0;
   animation: stamp-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) 3s forwards;
 }
@@ -317,12 +316,12 @@ body {
 @keyframes stamp-in {
   from {
     opacity: 0;
-    transform: rotate(-3deg) scale(1.7);
+    transform: scale(1.7);
     filter: blur(3px);
   }
   to {
     opacity: 0.5;
-    transform: rotate(-3deg) scale(1);
+    transform: scale(1);
     filter: blur(0);
   }
 }

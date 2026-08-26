@@ -5,6 +5,7 @@
     video: document.getElementById("bg"),
     bgm: document.getElementById("bgm"),
     info: document.getElementById("info"),
+    eta: document.getElementById("eta"),
     pct: document.getElementById("loaderPct"),
     fill: document.getElementById("progressFill"),
     status: document.getElementById("status")

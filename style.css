@@ -133,18 +133,34 @@ body {
   transition: width 0.3s ease;
 }
 
-.hud__status,
-.hud__pct {
+.hud__status {
   font-weight: 400;
   color: var(--grey);
   letter-spacing: 0.1em;
-  font-variant-numeric: tabular-nums;
   opacity: 0;
   animation: hud-in 1.6s ease-out 1.8s forwards;
 }
 
 .hud__pct {
+  font-weight: 400;
   color: var(--white);
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__right {
+  display: flex;
+  align-items: baseline;
+  opacity: 0;
+  animation: hud-in 1.6s ease-out 1.8s forwards;
+}
+
+.hud__eta {
+  font-weight: 400;
+  color: var(--grey);
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+  margin-right: 1.4em;
 }
 
 .hud__info {

@@ -1,6 +1,6 @@
 # SINGULARITY — Loading Screen
 
-Garry's Mod loading screen for the Singularity HL2RP server (City 24). Styled as a Half-Life chapter opening: cinematic in-map scene, lambda stencil, chapter title card, and a Source-style segmented progress dialog.
+Garry's Mod loading screen for the Singularity HL2RP server (City 24). Styled as a Half-Life chapter opening: cinematic in-map scene, the Singularity brand mark and wordmark, a chapter title card, and a Source-style segmented progress dialog.
 
 **GitHub Pages:** Enable **Settings → Pages → Source: GitHub Actions**. After the workflow deploys, set your server:
 

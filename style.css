@@ -136,43 +136,24 @@ body {
   z-index: -1;
 }
 
-.card__lambda {
-  width: 3.4em;
-  height: 3.4em;
-  font-size: clamp(14px, 1.85vmin, 22px);
-  margin-bottom: 1.4em;
-  fill: none;
-  stroke: var(--orange);
-  overflow: visible;
-  filter: drop-shadow(0 0 0.5em rgba(247, 147, 33, 0.35));
-}
-
-.lambda__ring {
-  stroke-width: 3;
-  stroke-dasharray: 277;
-  stroke-dashoffset: 277;
-  opacity: 0.85;
-  animation: draw 1.5s ease-in-out 1s forwards;
-}
-
-.lambda__glyph {
-  stroke-width: 5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 150;
-  stroke-dashoffset: 150;
-  animation: draw 1.1s ease-out 1.7s forwards;
+.card__mark {
+  width: clamp(220px, 30vmin, 340px);
+  margin-bottom: 0.4vmin;
+  opacity: 0;
+  filter: blur(10px);
+  animation: mark-in 2.2s ease-out 1s forwards;
 }
 
 .card__wordmark {
-  font-size: clamp(20px, 3.1vmin, 38px);
-  font-weight: bold;
-  color: var(--dust);
-  letter-spacing: 0.52em;
-  text-indent: 0.52em;
-  text-shadow: 0 0 24px rgba(0, 0, 0, 0.9);
+  margin: 0;
   opacity: 0;
+  transform: translateY(0.6vmin);
   animation: word-in 1.8s ease-out 2s forwards;
+}
+
+.card__wordmark-img {
+  width: clamp(280px, 36vmin, 460px);
+  filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.85));
 }
 
 .card__rule {
@@ -291,20 +272,27 @@ body {
   100% { transform: translate(0, 0); }
 }
 
-@keyframes draw {
-  to { stroke-dashoffset: 0; }
+@keyframes mark-in {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
 }
 
 @keyframes word-in {
   from {
     opacity: 0;
-    letter-spacing: 0.72em;
-    text-indent: 0.72em;
+    transform: translateY(0.6vmin);
   }
   to {
     opacity: 1;
-    letter-spacing: 0.52em;
-    text-indent: 0.52em;
+    transform: translateY(0);
   }
 }
 
@@ -349,8 +337,7 @@ body {
     animation-duration: 0.01s;
     animation-delay: 0s;
   }
-  .lambda__ring,
-  .lambda__glyph {
+  .card__mark {
     animation-duration: 0.01s;
     animation-delay: 0s;
   }

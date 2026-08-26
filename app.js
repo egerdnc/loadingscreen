@@ -35,7 +35,14 @@
     "Community — <b>discord.gg/singularity</b>",
     "Whitelist, characters and achievements — <b>portal.singularity-community.com</b>",
     "Rules and announcements — on the <b>Discord</b>",
-    "Closed <b>pre-alpha</b> — expect changes, report issues on the Discord"
+    "Closed <b>pre-alpha</b> — expect changes, report issues on the Discord",
+    "<b>Singularity Collective</b> — a semi-serious HL2RP community",
+    "Built on <b>Helix</b> with a fully custom schema",
+    "Dozens of systems built <b>in-house</b> for this server",
+    "One Steam account links to one Discord — <b>link yours on the portal</b>",
+    "Need help? Open a <b>support ticket</b> on the portal",
+    "<b>Achievements</b> unlock across the server, portal and Discord",
+    "In active development — expect <b>frequent updates</b>"
   ];
 
   var STATUS_FLOORS = [

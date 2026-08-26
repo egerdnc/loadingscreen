@@ -6,14 +6,10 @@
     bgm: document.getElementById("bgm"),
     chapter: document.getElementById("chapter"),
     caption: document.getElementById("caption"),
-    loaderTitle: document.getElementById("loaderTitle"),
     pct: document.getElementById("loaderPct"),
-    segments: document.getElementById("segments"),
+    fill: document.getElementById("progressFill"),
     status: document.getElementById("status")
   };
-
-  var SEG_COUNT = 24;
-  var segEls = [];
 
   var VIDEOS = [
     "assets/plaza.webm",
@@ -85,14 +81,10 @@
 
   function render() {
     var pct = Math.max(0, Math.min(100, state.shown));
-    var fill = Math.round((pct / 100) * SEG_COUNT);
-    for (var i = 0; i < segEls.length; i++) {
-      segEls[i].className = i < fill ? "seg is-fill" : "seg";
-    }
+    if (el.fill) el.fill.style.width = pct + "%";
     setText(el.pct, Math.floor(pct) + "%");
     if (pct >= 93 && !state.finished) {
       state.finished = true;
-      setText(el.loaderTitle, "STARTING . . .");
       if (el.chapter) {
         el.chapter.className = "card__chapter is-glow";
       }
@@ -280,7 +272,6 @@
   }
 
   function boot() {
-    buildSegments();
     render();
     initVideo();
     initMusic();

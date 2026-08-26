@@ -17,24 +17,21 @@
   </div>
 
   <div class="bar bar--top" aria-hidden="true"></div>
-  <div class="bar bar--bottom" aria-hidden="true"></div>
 
   <main class="card" role="status" aria-live="polite">
     <img class="card__mark" src="assets/brand/mark-glow.svg" alt="" />
     <h1 class="card__wordmark"><img class="card__wordmark-img" src="assets/brand/wordmark-white.svg" alt="SINGULARITY" /></h1>
-    <div class="card__rule" aria-hidden="true"></div>
     <h2 class="card__chapter" id="chapter">CITY TWENTY-FOUR</h2>
     <p class="card__caption" id="caption">&nbsp;</p>
   </main>
 
-  <section class="loader" id="loader" aria-label="Loading progress">
-    <div class="loader__head">
-      <span class="loader__title" id="loaderTitle">LOADING&nbsp;.&nbsp;.&nbsp;.</span>
-      <span class="loader__pct" id="loaderPct"></span>
+  <footer class="bar bar--bottom" aria-label="Loading progress">
+    <div class="progress" aria-hidden="true">
+      <div class="progress__fill" id="progressFill"></div>
     </div>
-    <div class="loader__segments" id="segments"></div>
-    <p class="loader__status" id="status">Establishing network connection</p>
-  </section>
+    <span class="hud__status" id="status">Establishing network connection</span>
+    <span class="hud__pct" id="loaderPct"></span>
+  </footer>
 
   <audio id="bgm" preload="auto"></audio>
 

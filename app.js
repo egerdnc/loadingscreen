@@ -37,17 +37,13 @@
     "Closed pre-alpha — report issues on the Discord",
     "Characters recognise faces, not names — <b>introduce yourself</b>",
     "Nationality matters — characters can speak their <b>native language</b>",
-    "<b>Rations</b> dispense twice a day — miss one and go hungry",
-    "Hunger, thirst and <b>exhaustion</b> shape your character's day",
+    "Hunger, thirst and <b>exhaustion</b> are tracked — plan around them",
     "Claim <b>housing</b> and furnish it with the building kit",
     "Break items down for materials — <b>fabricate</b> new ones",
     "Skills grow with use — <b>crafting, medical, cooking, scavenging</b>",
-    "What you carry stays on your body <b>when you die</b>",
+    "Your inventory stays on your body <b>when you die</b>",
     "Sixty hours of playtime unlocks founding your <b>own faction</b>",
-    "<b>Contraband</b> is enforced — hide it well",
-    "A <b>travelling merchant</b> passes through the city",
-    "The city runs its own <b>weather</b> and day-night cycle",
-    "The <b>Civil Workers Union</b> offers factory shifts and honest pay"
+    "The city runs its own <b>weather</b> and day-night cycle"
   ];
 
   var STATUS_FLOORS = [

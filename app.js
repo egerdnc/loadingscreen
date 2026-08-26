@@ -34,16 +34,8 @@
   var INFO = [
     "Community — <b>discord.gg/singularity</b>",
     "Whitelist, characters and achievements — <b>portal.singularity-community.com</b>",
-    "Closed pre-alpha — report issues on the Discord",
-    "Characters recognise faces, not names — <b>introduce yourself</b>",
-    "Nationality matters — characters can speak their <b>native language</b>",
-    "Hunger, thirst and <b>exhaustion</b> are tracked — plan around them",
-    "Claim <b>housing</b> and furnish it with the building kit",
-    "Break items down for materials — <b>fabricate</b> new ones",
-    "Skills grow with use — <b>crafting, medical, cooking, scavenging</b>",
-    "Your inventory stays on your body <b>when you die</b>",
-    "Sixty hours of playtime unlocks founding your <b>own faction</b>",
-    "The city runs its own <b>weather</b> and day-night cycle"
+    "Rules and announcements — on the <b>Discord</b>",
+    "Closed <b>pre-alpha</b> — expect changes, report issues on the Discord"
   ];
 
   var STATUS_FLOORS = [

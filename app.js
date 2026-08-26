@@ -4,8 +4,7 @@
   var el = {
     video: document.getElementById("bg"),
     bgm: document.getElementById("bgm"),
-    chapter: document.getElementById("chapter"),
-    caption: document.getElementById("caption"),
+    info: document.getElementById("info"),
     pct: document.getElementById("loaderPct"),
     fill: document.getElementById("progressFill"),
     status: document.getElementById("status")
@@ -32,12 +31,15 @@
 
   var MUSIC_VOLUME = 0.07;
 
-  var CHAPTERS = {
-    rp_c24_district2_res: {
-      chapter: "DISTRICT TWO",
-      caption: "CITY TWENTY-FOUR · RESIDENTIAL BLOCK"
-    }
-  };
+  var INFO = [
+    "Community — <b>discord.gg/singularity</b>",
+    "Whitelist and characters — <b>portal.singularity-community.com</b>",
+    "<b>F1</b> opens the menu — characters, inventory, help",
+    "<b>/ooc</b> out-of-character · <b>/looc</b> local OOC",
+    "<b>/me</b> describes an action · <b>/it</b> describes the scene",
+    "<b>/pm</b> sends a private message · <b>/roll</b> rolls the dice",
+    "Closed pre-alpha — report issues on the Discord"
+  ];
 
   var STATUS_FLOORS = [
     { match: "workshop complete", floor: 80 },
@@ -69,26 +71,10 @@
     return String(s || "").toLowerCase();
   }
 
-  function buildSegments() {
-    if (!el.segments) return;
-    for (var i = 0; i < SEG_COUNT; i++) {
-      var d = document.createElement("div");
-      d.className = "seg";
-      el.segments.appendChild(d);
-      segEls.push(d);
-    }
-  }
-
   function render() {
     var pct = Math.max(0, Math.min(100, state.shown));
     if (el.fill) el.fill.style.width = pct + "%";
     setText(el.pct, Math.floor(pct) + "%");
-    if (pct >= 93 && !state.finished) {
-      state.finished = true;
-      if (el.chapter) {
-        el.chapter.className = "card__chapter is-glow";
-      }
-    }
   }
 
   function tick() {
@@ -107,25 +93,6 @@
     state.target = Math.max(state.target, (done / state.filesTotal) * 80);
   }
 
-  function prettifyMap(mapname) {
-    var s = String(mapname || "").replace(/^(rp|gm|cs|de|ttt)_/i, "");
-    var words = s.split(/[_\-]+/);
-    var out = [];
-    for (var i = 0; i < words.length; i++) {
-      if (words[i]) out.push(words[i].toUpperCase());
-    }
-    return out.join(" ") || "UNKNOWN SECTOR";
-  }
-
-  function resolveChapter(mapname) {
-    var key = norm(mapname);
-    if (CHAPTERS[key]) return CHAPTERS[key];
-    return {
-      chapter: prettifyMap(mapname),
-      caption: "CITY TWENTY-FOUR"
-    };
-  }
-
   function trimFileName(name) {
     var parts = String(name || "").replace(/\\/g, "/").split("/");
     if (parts.length > 2) parts = parts.slice(parts.length - 2);
@@ -134,10 +101,23 @@
 
   window.GameDetails = function (servername, serverurl, mapname, maxplayers, steamid, gamemode) {
     state.gotDetails = true;
-    var c = resolveChapter(mapname);
-    setText(el.chapter, c.chapter);
-    setText(el.caption, c.caption);
   };
+
+  function startInfoLoop() {
+    if (!el.info) return;
+    var i = (Math.random() * INFO.length) | 0;
+    function show() {
+      el.info.innerHTML = INFO[i % INFO.length];
+      el.info.style.opacity = "1";
+      i++;
+      setTimeout(hide, 6200);
+    }
+    function hide() {
+      el.info.style.opacity = "0";
+      setTimeout(show, 800);
+    }
+    setTimeout(show, 2200);
+  }
 
   window.SetFilesTotal = function (total) {
     var n = parseInt(total, 10);
@@ -275,6 +255,7 @@
     render();
     initVideo();
     initMusic();
+    startInfoLoop();
     setInterval(tick, 100);
     var forceDemo = window.location.search.indexOf("demo") !== -1;
     setTimeout(runDemo, forceDemo ? 300 : 2500);

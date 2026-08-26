@@ -1,310 +1,292 @@
 (function () {
   "use strict";
 
-  // ==============================
-  // DOM refs
-  // ==============================
   var el = {
-    status: document.getElementById("status"),
-    node: document.getElementById("node"),
-    sector: document.getElementById("sector"),
-    mode: document.getElementById("mode"),
-    cap: document.getElementById("cap"),
-    bgVideo: document.getElementById("bg"),
+    video: document.getElementById("bg"),
     bgm: document.getElementById("bgm"),
-    terminal: document.querySelector(".card.terminal") || document.querySelector(".terminal")
+    chapter: document.getElementById("chapter"),
+    caption: document.getElementById("caption"),
+    loaderTitle: document.getElementById("loaderTitle"),
+    pct: document.getElementById("loaderPct"),
+    segments: document.getElementById("segments"),
+    status: document.getElementById("status")
   };
 
-  function setText(target, txt) {
-    if (!target) return;
-    target.textContent = (txt == null) ? "" : String(txt);
-  }
+  var SEG_COUNT = 24;
+  var segEls = [];
 
-  function norm(s) { return String(s || "").toLowerCase(); }
-  function isFn(v) { return typeof v === "function"; }
+  var VIDEOS = [
+    "assets/plaza.webm",
+    "assets/train1.webm",
+    "assets/citadel.webm",
+    "assets/cp1.webm",
+    "assets/hideout.webm",
+    "assets/street.webm",
+    "assets/cm1.webm"
+  ];
 
-  function clampVol(v) {
-    var n = Number(v);
-    if (isNaN(n)) return 0;
-    if (n < 0) return 0;
-    if (n > 1) return 1;
-    return n;
-  }
+  var MUSIC = [
+    "assets/background.mp3",
+    "assets/godspeed.mp3",
+    "assets/goteberg.mp3",
+    "assets/scum.mp3",
+    "assets/Bones.mp3",
+    "assets/precipice.mp3"
+  ];
 
-  function applyVideoVolume() {
-    if (!el.bgVideo) return;
-    try { el.bgVideo.volume = clampVol(VIDEO.vol); } catch (e) {}
-  }
+  var MUSIC_VOLUME = 0.07;
 
-  function applyMusicVolume() {
-    if (!el.bgm) return;
-    try { el.bgm.volume = clampVol(MUSIC.vol); } catch (e) {}
-  }
-
-  // ==============================
-  // Status mapping (GMod hook -> Combine-ish text)
-  // ==============================
-  function mapStatus(raw) {
-    var s = raw || "";
-    var n = norm(s);
-
-    if (n.indexOf("retrieving server info") !== -1) return "HANDSHAKE…";
-    if (n.indexOf("sending client info") !== -1) return "IDENTITY SUBMITTED…";
-    if (n.indexOf("receiving client info") !== -1) return "IDENTITY CONFIRMED…";
-    if (n.indexOf("signon") !== -1) return "SESSION NEGOTIATION…";
-
-    if (n.indexOf("workshop") !== -1) return "ASSET INTAKE…";
-    if (n.indexOf("downloading") !== -1) return "ASSET INTAKE…";
-    if (n.indexOf("mounting") !== -1) return "ASSEMBLY…";
-    if (n.indexOf("precaching") !== -1) return "STAGING…";
-
-    if (n.indexOf("lua") !== -1) return "RUNTIME INITIALIZING…";
-
-    return s || "PROCESSING…";
-  }
-
-  // ==============================
-  // Rare "historical echo" overlay
-  // ==============================
-  var ECHO = {
-    lines: [
-      "ARCHIVAL NOTICE: CITY DORMANT · 14 CYCLES",
-      "PRIOR DESIGNATION: VLADIVOSTOK",
-      "POST-STORM ACTIVATION CONFIRMED",
-      "REPOPULATION PHASE IN PROGRESS",
-      "RESOURCE PROCESSING NODE · RES-77R"
-    ],
-    chance: 0.08,
-    minMs: 8000,
-    showMs: 2200,
-    lastAt: 0,
-    timer: null
-  };
-
-  function maybeEcho(currentMappedStatus) {
-    if (!el.status) return;
-
-    var now = Date.now();
-    if ((now - ECHO.lastAt) < ECHO.minMs) return;
-    if (Math.random() > ECHO.chance) return;
-
-    ECHO.lastAt = now;
-
-    var line = ECHO.lines[(Math.random() * ECHO.lines.length) | 0];
-    setText(el.status, line);
-
-    if (ECHO.timer) clearTimeout(ECHO.timer);
-    ECHO.timer = setTimeout(function () {
-      setText(el.status, currentMappedStatus);
-      ECHO.timer = null;
-    }, ECHO.showMs);
-  }
-
-  // ==============================
-  // GMod hooks (exposed globally)
-  // ==============================
-  window.GameDetails = function (servername, serverurl, mapname, maxplayers, steamid, gamemode) {
-    setText(el.node, servername || "UNSPECIFIED");
-    setText(el.sector, mapname || "UNKNOWN");
-    setText(el.mode, gamemode || "UNDEFINED");
-    setText(el.cap, maxplayers ? String(maxplayers) : "—");
-
-    // Hide any audio UI in real GMod context (if you have it)
-    var audioBtn = document.getElementById("audioToggle");
-    if (audioBtn) audioBtn.style.display = "none";
-  };
-
-  window.SetStatusChanged = function (s) {
-    var mapped = mapStatus(s);
-    setText(el.status, mapped);
-    maybeEcho(mapped);
-  };
-
-  // Seed status
-  setText(el.status, "CONNECTION INITIALIZATION…");
-
-  // ==============================
-  // Right-side number pool (DOM <pre id="rain"> if present, else created)
-  // ==============================
-  var RAIN = {
-    rows: 22,
-    cols: 14,
-    tickMs: 140,
-    charset: "0123456789",
-    buf: [],
-    timer: null
-  };
-
-  function ensureRainPre() {
-    var pre = document.getElementById("rain");
-    if (pre) return pre;
-
-    if (!el.terminal) return null;
-
-    var wrap = document.createElement("div");
-    wrap.className = "terminal__rain";
-    wrap.setAttribute("aria-hidden", "true");
-
-    pre = document.createElement("pre");
-    pre.id = "rain";
-
-    wrap.appendChild(pre);
-    el.terminal.appendChild(wrap);
-    return pre;
-  }
-
-  function rainLine() {
-    var s = "";
-    for (var c = 0; c < RAIN.cols; c++) {
-      s += RAIN.charset[(Math.random() * RAIN.charset.length) | 0];
-      if ((c % 4) === 3) s += " ";
+  var CHAPTERS = {
+    rp_c24_district2_res: {
+      chapter: "DISTRICT TWO",
+      caption: "CITY TWENTY-FOUR · RESIDENTIAL BLOCK"
     }
-    return s;
-  }
-
-  function startRain() {
-    var pre = ensureRainPre();
-    if (!pre) return;
-
-    // seed
-    RAIN.buf.length = 0;
-    for (var r = 0; r < RAIN.rows; r++) RAIN.buf.push(rainLine());
-    pre.textContent = RAIN.buf.join("\n");
-
-    if (RAIN.timer) clearInterval(RAIN.timer);
-    RAIN.timer = setInterval(function () {
-      RAIN.buf.shift();
-      RAIN.buf.push(rainLine());
-      pre.textContent = RAIN.buf.join("\n");
-    }, RAIN.tickMs);
-  }
-
-  // ==============================
-  // Video selection + autoplay
-  // ==============================
-  var VIDEO = {
-    list: [
-      "assets/plaza.webm",
-      "assets/train1.webm",
-      "assets/citadel.webm",
-      "assets/cp1.webm",
-      "assets/hideout.webm",
-      "assets/street.webm",
-      "assets/cm1.webm",
-    ],
-    vol: 0.1
   };
 
-  var MUSIC = {
-    list: [
-      "assets/background.mp3",
-      "assets/godspeed.mp3",
-      "assets/goteberg.mp3",
-      "assets/scum.mp3",
-      "assets/bones.mp3",
-      "assets/precipice.mp3",
-    ],
-    vol: 0.1
+  var STATUS_FLOORS = [
+    { match: "workshop complete", floor: 80 },
+    { match: "retrieving server info", floor: 82 },
+    { match: "connecting to server", floor: 84 },
+    { match: "receiving server info", floor: 86 },
+    { match: "sending client info", floor: 90 },
+    { match: "client info sent", floor: 93 },
+    { match: "starting lua", floor: 95 },
+    { match: "lua", floor: 95 },
+    { match: "spawn", floor: 98 }
+  ];
+
+  var state = {
+    filesTotal: 0,
+    filesDone: 0,
+    target: 4,
+    shown: 0,
+    floor: 0,
+    gotDetails: false,
+    finished: false
   };
 
-  function pickVideo() {
-    return VIDEO.list[(Math.random() * VIDEO.list.length) | 0];
+  function setText(node, txt) {
+    if (node) node.textContent = txt == null ? "" : String(txt);
   }
 
-  function pickMusic() {
-    return MUSIC.list[(Math.random() * MUSIC.list.length) | 0];
+  function norm(s) {
+    return String(s || "").toLowerCase();
   }
 
-  function pickNextMusic(currentSrc) {
-    var list = MUSIC.list;
-    if (!list.length) return "";
-    if (list.length === 1) return list[0];
-
-    var currentName = String(currentSrc || "").split("/").pop();
-    var next = "";
-
-    do {
-      next = list[(Math.random() * list.length) | 0];
-    } while (next.split("/").pop() === currentName);
-
-    return next;
-  }
-
-  function tryStartPlayback() {
-    var videoPromise = null;
-    var audioPromise = null;
-
-    try { videoPromise = el.bgVideo.play(); } catch (e) { videoPromise = null; }
-    try { if (el.bgm) audioPromise = el.bgm.play(); } catch (e) { audioPromise = null; }
-
-    var promises = [];
-    if (videoPromise && typeof videoPromise.then === "function") promises.push(videoPromise);
-    if (audioPromise && typeof audioPromise.then === "function") promises.push(audioPromise);
-
-    if (promises.length) Promise.all(promises).catch(function () {});
-  }
-
-  function initVideo() {
-    if (!el.bgVideo) return;
-
-    el.bgVideo.src = pickVideo();
-    try { el.bgVideo.load(); } catch (e) {}
-
-    el.bgVideo.loop = true;
-    el.bgVideo.playsInline = true;
-
-    // Attempt unmuted autoplay (may be blocked)
-    el.bgVideo.muted = false;
-    applyVideoVolume();
-
-    if (isFn(el.bgVideo.addEventListener)) {
-      el.bgVideo.addEventListener("loadedmetadata", applyVideoVolume);
-      el.bgVideo.addEventListener("canplay", applyVideoVolume);
-      el.bgVideo.addEventListener("play", applyVideoVolume);
+  function buildSegments() {
+    if (!el.segments) return;
+    for (var i = 0; i < SEG_COUNT; i++) {
+      var d = document.createElement("div");
+      d.className = "seg";
+      el.segments.appendChild(d);
+      segEls.push(d);
     }
-
-    el.bgVideo.setAttribute("playsinline", "");
-    el.bgVideo.setAttribute("autoplay", "");
-
-    tryStartPlayback();
   }
 
-  function initAudio() {
-    if (!el.bgm) return;
-
-    el.bgm.src = pickMusic();
-    try { el.bgm.load(); } catch (e) {}
-
-    el.bgm.loop = false;
-    el.bgm.preload = "auto";
-    el.bgm.muted = false;
-    applyMusicVolume();
-    el.bgm.setAttribute("autoplay", "");
-
-    if (isFn(el.bgm.addEventListener)) {
-      el.bgm.addEventListener("loadedmetadata", applyMusicVolume);
-      el.bgm.addEventListener("canplay", applyMusicVolume);
-      el.bgm.addEventListener("play", applyMusicVolume);
+  function render() {
+    var pct = Math.max(0, Math.min(100, state.shown));
+    var fill = Math.round((pct / 100) * SEG_COUNT);
+    for (var i = 0; i < segEls.length; i++) {
+      segEls[i].className = i < fill ? "seg is-fill" : "seg";
     }
+    setText(el.pct, Math.floor(pct) + "%");
+    if (pct >= 93 && !state.finished) {
+      state.finished = true;
+      setText(el.loaderTitle, "STARTING . . .");
+      if (el.chapter) {
+        el.chapter.className = "card__chapter is-glow";
+      }
+    }
+  }
 
-    el.bgm.onended = function () {
-      var next = pickNextMusic(el.bgm.currentSrc);
-      if (!next) return;
+  function tick() {
+    if (state.floor < 76) {
+      state.floor = Math.min(76, state.floor + 0.018);
+    }
+    var target = Math.max(state.target, state.floor);
+    state.shown += (target - state.shown) * 0.055;
+    if (target - state.shown < 0.05) state.shown = target;
+    render();
+  }
 
-      el.bgm.src = next;
-      try { el.bgm.load(); } catch (e) {}
-      applyMusicVolume();
-      try { el.bgm.play(); } catch (e) {}
+  function fileProgress() {
+    if (state.filesTotal <= 0) return;
+    var done = Math.max(0, Math.min(state.filesTotal, state.filesDone));
+    state.target = Math.max(state.target, (done / state.filesTotal) * 80);
+  }
+
+  function prettifyMap(mapname) {
+    var s = String(mapname || "").replace(/^(rp|gm|cs|de|ttt)_/i, "");
+    var words = s.split(/[_\-]+/);
+    var out = [];
+    for (var i = 0; i < words.length; i++) {
+      if (words[i]) out.push(words[i].toUpperCase());
+    }
+    return out.join(" ") || "UNKNOWN SECTOR";
+  }
+
+  function resolveChapter(mapname) {
+    var key = norm(mapname);
+    if (CHAPTERS[key]) return CHAPTERS[key];
+    return {
+      chapter: prettifyMap(mapname),
+      caption: "CITY TWENTY-FOUR"
     };
   }
 
-  // ==============================
-  // Boot (no terminal background FX)
-  // ==============================
+  function trimFileName(name) {
+    var parts = String(name || "").replace(/\\/g, "/").split("/");
+    if (parts.length > 2) parts = parts.slice(parts.length - 2);
+    return parts.join("/");
+  }
+
+  window.GameDetails = function (servername, serverurl, mapname, maxplayers, steamid, gamemode) {
+    state.gotDetails = true;
+    var c = resolveChapter(mapname);
+    setText(el.chapter, c.chapter);
+    setText(el.caption, c.caption);
+  };
+
+  window.SetFilesTotal = function (total) {
+    var n = parseInt(total, 10);
+    if (!isNaN(n) && n > 0) {
+      state.filesTotal = n;
+      fileProgress();
+    }
+  };
+
+  window.SetFilesNeeded = function (needed) {
+    var n = parseInt(needed, 10);
+    if (isNaN(n) || n < 0) return;
+    if (state.filesTotal > 0) {
+      state.filesDone = state.filesTotal - n;
+      fileProgress();
+      setText(el.status, "Downloading assets — " + state.filesDone + " of " + state.filesTotal);
+    }
+  };
+
+  window.DownloadingFile = function (fileName) {
+    state.filesDone++;
+    fileProgress();
+    setText(el.status, "Downloading " + trimFileName(fileName));
+  };
+
+  window.SetStatusChanged = function (status) {
+    var s = String(status || "").replace(/\.+\s*$/, "");
+    var n = norm(s);
+    for (var i = 0; i < STATUS_FLOORS.length; i++) {
+      if (n.indexOf(STATUS_FLOORS[i].match) !== -1) {
+        state.target = Math.max(state.target, STATUS_FLOORS[i].floor);
+        break;
+      }
+    }
+    if (s) setText(el.status, s);
+  };
+
+  function pick(list, notSrc) {
+    if (!list.length) return "";
+    if (list.length === 1) return list[0];
+    var current = String(notSrc || "").split("/").pop();
+    var choice = "";
+    do {
+      choice = list[(Math.random() * list.length) | 0];
+    } while (choice.split("/").pop() === current);
+    return choice;
+  }
+
+  function initVideo() {
+    if (!el.video) return;
+    el.video.src = pick(VIDEOS);
+    el.video.loop = true;
+    el.video.muted = true;
+    el.video.addEventListener("canplay", function () {
+      el.video.className = "scene__video is-live";
+    });
+    el.video.addEventListener("error", function () {
+      el.video.className = "scene__video";
+    });
+    try { el.video.load(); } catch (e) {}
+    var p = null;
+    try { p = el.video.play(); } catch (e) {}
+    if (p && typeof p.then === "function") p.then(null, function () {});
+  }
+
+  function rampMusic() {
+    var t0 = Date.now();
+    var iv = setInterval(function () {
+      var k = Math.min(1, (Date.now() - t0) / 2500);
+      try { el.bgm.volume = MUSIC_VOLUME * k; } catch (e) {}
+      if (k >= 1) clearInterval(iv);
+    }, 100);
+  }
+
+  function playTrack(src) {
+    if (!el.bgm || !src) return;
+    el.bgm.src = src;
+    try { el.bgm.volume = 0; } catch (e) {}
+    try { el.bgm.load(); } catch (e) {}
+    var p = null;
+    try { p = el.bgm.play(); } catch (e) {}
+    if (p && typeof p.then === "function") {
+      p.then(rampMusic, function () {});
+    } else {
+      rampMusic();
+    }
+  }
+
+  function initMusic() {
+    if (!el.bgm) return;
+    el.bgm.loop = false;
+    el.bgm.onended = function () {
+      playTrack(pick(MUSIC, el.bgm.currentSrc));
+    };
+    setTimeout(function () {
+      playTrack(pick(MUSIC));
+    }, 700);
+  }
+
+  function runDemo() {
+    if (state.gotDetails) return;
+    window.GameDetails("Singularity Collective", "", "rp_c24_district2_res", 40, "0", "ixhl2rp");
+    var demoFiles = [
+      "materials/models/props_c24/plaza_facade01.vmt",
+      "models/props_c24/streetlamp02.mdl",
+      "sound/ambient/c24/wind_block_loop.wav",
+      "materials/overviews/rp_c24_district2_res.vtf",
+      "models/props_combine/checkpoint_gate01.mdl",
+      "materials/decals/c24/ration_notice.vmt",
+      "sound/music/singularity_theme.mp3",
+      "models/props_c24/tenement_door03.mdl"
+    ];
+    window.SetFilesTotal(96);
+    var left = 96;
+    var iv = setInterval(function () {
+      left -= 1 + ((Math.random() * 3) | 0);
+      if (left <= 0) {
+        clearInterval(iv);
+        window.SetFilesNeeded(0);
+        setTimeout(function () { window.SetStatusChanged("Workshop Complete"); }, 500);
+        setTimeout(function () { window.SetStatusChanged("Retrieving server info..."); }, 1400);
+        setTimeout(function () { window.SetStatusChanged("Sending client info..."); }, 3000);
+        setTimeout(function () { window.SetStatusChanged("Starting Lua..."); }, 4600);
+        return;
+      }
+      window.SetFilesNeeded(left);
+      if (Math.random() < 0.6) {
+        window.DownloadingFile(demoFiles[(Math.random() * demoFiles.length) | 0]);
+        state.filesDone--;
+      }
+    }, 140);
+  }
+
   function boot() {
-    startRain();
-    initAudio();
+    buildSegments();
+    render();
     initVideo();
+    initMusic();
+    setInterval(tick, 100);
+    var forceDemo = window.location.search.indexOf("demo") !== -1;
+    setTimeout(runDemo, forceDemo ? 300 : 2500);
   }
 
   if (document.readyState === "loading") {

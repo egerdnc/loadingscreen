@@ -1,24 +1,19 @@
-# CITY 77
+# SINGULARITY — Loading Screen
+
+Garry's Mod loading screen for the Singularity HL2RP server (City 24). Styled as a Half-Life chapter opening: cinematic in-map scene, lambda stencil, chapter title card, and a Source-style segmented progress dialog.
 
 **GitHub Pages:** Enable **Settings → Pages → Source: GitHub Actions**. After the workflow deploys, set your server:
 
 `sv_loadingurl "https://<user>.github.io/<repo>/"`
 
-Use the **page_url** shown on the latest successful **Deploy to GitHub Pages** workflow run.
+## Behavior
 
----
-
-A custom Garry's Mod loading screen built for City 77 (Vladivostok), a post-war reclamation and resource-processing hub within the Half-Life 2 universe.
-
-The design goal is minimalism with diegetic presentation.
-
-## Setting Context
-
-City 77 (Vladivostok) is a post-Portal Storm industrial reclamation zone activated years after the Seven Hour War. Once dormant, the city now functions as a critical resource extraction and processing node supporting Combine logistics and xenium refinement operations tied to nearby dimensional anomalies.
+- `GameDetails` resolves the map into a chapter title (`rp_c24_district2_res` → DISTRICT TWO). Unknown maps fall back to a prettified map name.
+- `SetFilesTotal` / `SetFilesNeeded` / `DownloadingFile` drive the segmented bar with real download progress; late connection statuses push it toward completion.
+- Background is a random muted clip from `assets/`, graded dark; one quiet music track plays with a slow fade-in.
+- Open with `?demo=1` in a normal browser to simulate a full connect sequence.
 
 ## Media Credits
-
-Third-Party Media Acknowledgments
 
 The following content creators' work has been referenced for visual inspiration or demonstration purposes in this project's loader assets:
 

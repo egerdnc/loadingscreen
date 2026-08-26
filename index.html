@@ -3,77 +3,43 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Loading…</title>
+  <title>SINGULARITY</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Background video -->
-  <video id="bg" preload="auto"></video>
-  <audio id="bgm" preload="auto"></audio>
+  <div class="scene" aria-hidden="true">
+    <div class="scene__sky"></div>
+    <video id="bg" class="scene__video" muted playsinline preload="auto"></video>
+    <div class="scene__grade"></div>
+    <div class="scene__vignette"></div>
+    <div class="scene__grain"></div>
+  </div>
 
-  <!-- Vignette overlay -->
-  <div class="vignette" aria-hidden="true"></div>
-  <div class="scanlines" aria-hidden="true"></div>
+  <div class="bar bar--top" aria-hidden="true"></div>
+  <div class="bar bar--bottom" aria-hidden="true"></div>
 
-  <!-- Bottom-aligned HUD -->
-  <main class="wrap">
-    <section class="card terminal" role="status" aria-live="polite">
-      <!-- terminal visual layers -->
-      <div class="terminal__scan" aria-hidden="true"></div>
-      <div class="terminal__frameTop" aria-hidden="true"></div>
-      <div class="terminal__frameBottom" aria-hidden="true"></div>
-
-      <!-- right-side number pool -->
-      <div class="terminal__rain" aria-hidden="true">
-        <pre id="rain"></pre>
-      </div>
-      <div class="terminal__sub">URBAN NODE · CITY 77 · VLADIVOSTOK</div>
-      <img class="terminal__mark" src="assets/Advisor_pod_logo.png" alt="" aria-hidden="true">
-      <div class="terminal__sub">RESOURCE PROCESSING NODE · RES-77R</div>
-      
-      <div class="termContent">
-      <!-- header -->
-      <header class="terminal__top">
-        <div class="terminal__label">UU.TERMINAL.77-OVR-4E92A-CIV</div>
-      </header>
-    
-      <!-- info grid -->
-      <div class="terminal__grid">
-        <div class="kv">
-          <div class="k">UPLINK-ID</div>
-          <div id="node" class="v">—</div>
-        </div>
-      
-        <div class="kv">
-          <div class="k">SECTOR GRID</div>
-          <div id="sector" class="v">—</div>
-        </div>
-      
-        <div class="kv">
-          <div class="k">MODE</div>
-          <div id="mode" class="v">—</div>
-        </div>
-      
-        <div class="kv">
-          <div class="k">THRESHOLD</div>
-          <div id="cap" class="v">—</div>
-        </div>
-      </div>
-
-      <!-- bulletin line -->
-      <div class="terminal__bulletin">
-        <div class="k">BULLETIN</div>
-        <div id="status" class="terminal__status">
-          CONNECTION INITIALIZATION…
-        </div>
-        <div class="terminal__requirement">
-          REQUIREMENT: CLIENT MUST USE GMOD X86-64 CHROMIUM BETA.
-        </div>
-      </div>
-      </div>
-    </section>
+  <main class="card" role="status" aria-live="polite">
+    <svg class="card__lambda" viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="lambda__ring" cx="50" cy="50" r="44" />
+      <path class="lambda__glyph" d="M 33 78 L 47 44 Q 50 36 46 28 L 42 20 M 46 41 L 61 78" />
+    </svg>
+    <h1 class="card__wordmark" id="wordmark">SINGULARITY</h1>
+    <div class="card__rule" aria-hidden="true"></div>
+    <h2 class="card__chapter" id="chapter">CITY TWENTY-FOUR</h2>
+    <p class="card__caption" id="caption">&nbsp;</p>
   </main>
+
+  <section class="loader" id="loader" aria-label="Loading progress">
+    <div class="loader__head">
+      <span class="loader__title" id="loaderTitle">LOADING&nbsp;.&nbsp;.&nbsp;.</span>
+      <span class="loader__pct" id="loaderPct"></span>
+    </div>
+    <div class="loader__segments" id="segments"></div>
+    <p class="loader__status" id="status">Establishing network connection</p>
+  </section>
+
+  <audio id="bgm" preload="auto"></audio>
 
   <script src="app.js"></script>
 </body>

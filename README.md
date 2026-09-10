@@ -48,10 +48,17 @@ Clearing site data resets the estimate to the 42 second default. Nothing else de
 | Telemetry | 1.7s | Status, countdown and percentage engage |
 | Collapse | 2.0s | The wordmark's letters converge inward, centre letters landing first |
 | Brief | 2.6s | The information panel starts cycling |
+| Rule | 2.8s | The separator draws outward from the centre |
 | Stamp | 3.05s | PRE-ALPHA sets |
 
 Every reveal is written so its resting state is the visible one and the animation plays *backwards*
 into it. If animations never run, the page is simply fully visible rather than blank.
+
+Nothing in the centre column may carry a `transform` once it has settled. Text inside a transformed
+ancestor loses subpixel antialiasing and renders visibly soft, and the stamp is the only real text in
+that column, so it was the only thing that showed it. The column is therefore offset with padding
+rather than `translateY`, the stamp reveals on opacity alone, and its size steps through whole pixels
+instead of a fractional `vmin`.
 
 ## Loading messages
 

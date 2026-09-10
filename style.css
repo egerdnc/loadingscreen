@@ -359,10 +359,6 @@ body {
 
 .mask--top {
   top: 0;
-}
-
-.mask--bottom {
-  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -370,6 +366,10 @@ body {
   font-family: var(--mono);
   font-size: clamp(9px, 1.02vmin, 13px);
   animation: reveal 1.1s var(--ease) 1.7s backwards;
+}
+
+.mask--bottom {
+  bottom: 0;
 }
 
 .tele {
@@ -488,7 +488,7 @@ body {
   .axis__rule,
   .brief,
   .beam,
-  .mask--bottom { animation: none; }
+  .mask--top { animation: none; }
   .brief__label,
   .brief__value { transition: none; }
 }

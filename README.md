@@ -22,7 +22,9 @@ drawn next to it.
 The streaks are removed from the inlined SVG and redrawn as two DOM elements purely so progress can
 drive their length. Everything else about the disc — halo, arcs, lens flares, mask — is untouched.
 
-The percentage and the countdown in the bottom bar carry the exact numbers.
+The percentage and the countdown carry the exact numbers. They live in the **top** letterbox, not the
+bottom one: Garry's Mod draws its own progress bar over the bottom of the page, and anything put there
+is hidden behind it. The bottom bar is left empty so the engine's bar sits in a clean black band.
 
 ## Countdown
 

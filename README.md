@@ -54,6 +54,11 @@ Clearing site data resets the estimate to the 42 second default. Nothing else de
 Every reveal is written so its resting state is the visible one and the animation plays *backwards*
 into it. If animations never run, the page is simply fully visible rather than blank.
 
+The lens ring around the disc uses `backdrop-filter`, which blurs whatever is painted behind it.
+Positioned boxes paint after static ones, so the wordmark, separator and stamp are all
+`position: relative` — without that they paint *behind* the lens and the blur falls straight across
+them. That was the cause of a stamp that looked soft no matter what was done to the type.
+
 Nothing in the centre column may carry a `transform` once it has settled. Text inside a transformed
 ancestor loses subpixel antialiasing and renders visibly soft, and the stamp is the only real text in
 that column, so it was the only thing that showed it. The column is therefore offset with padding

@@ -15,9 +15,7 @@
   };
 
   var T_SCENE = 500;
-  var T_BEAM_IN = 260;
-  var T_BEAM_SET = 1150;
-  var BEAM_MIN = 0.11;
+  var MARK_STREAK = 0.39;
   var DOWNLOAD_CEILING = 68;
   var DEFAULT_TAIL = 42000;
   var MUSIC_VOLUME = 0.07;
@@ -54,6 +52,37 @@
     { label: "ACHIEVEMENTS", value: "Earn them in game, track them on the portal" }
   ];
 
+  var JOKES = [
+    "Polishing crowbars",
+    "Shelling cities",
+    "Preparing unforeseen consequences",
+    "Feeding the headcrabs",
+    "Reticulating antlions",
+    "Teaching Combine soldiers to aim",
+    "Stacking barrels in a hallway",
+    "Confiscating your crowbar",
+    "Charging the gravity gun",
+    "Rationing the rations",
+    "Filing your citizen paperwork",
+    "Assigning your housing block",
+    "Winding up the manhacks",
+    "Bricking up a doorway",
+    "Ignoring the Breencast",
+    "Draining the canals",
+    "Counting vortigaunts",
+    "Waiting for the train",
+    "Misplacing the Borealis",
+    "Calibrating the suit charger",
+    "Sweeping up headcrab shells",
+    "Losing the airboat keys",
+    "Stamping loyalty points",
+    "Letting you sleep in",
+    "Restocking the supply crates",
+    "Hiding a lambda behind a dumpster",
+    "Testing the emergency broadcast",
+    "Warming up the teleporter"
+  ];
+
   var STATUS_MAP = [
     ["workshop complete", "Add-ons ready", 70],
     ["workshop", "Mounting add-ons", 66],
@@ -79,7 +108,7 @@
     shown: 0,
     dlDoneAt: 0,
     gotDetails: false,
-    namedFile: false,
+    realStatusAt: 0,
     videoFailed: false,
     beam: 0,
     etaShown: null,
@@ -149,10 +178,18 @@
     return current + (target - current) * (1 - Math.exp(-dt / tau));
   }
 
-  function trimFileName(name) {
-    var parts = String(name || "").replace(/\\/g, "/").split("/");
-    if (parts.length > 3) parts = parts.slice(parts.length - 3);
-    return parts.join("/");
+  var beamBase = 0;
+
+  function measureBeam() {
+    var horizon = document.querySelector(".horizon");
+    if (!horizon || !el.beamL) return;
+    var markW = horizon.offsetWidth;
+    var beamW = el.beamL.offsetWidth;
+    if (markW > 0 && beamW > 0) beamBase = (MARK_STREAK * markW) / beamW;
+  }
+
+  function beamFloor() {
+    return beamBase > 0 ? Math.min(1, beamBase) : 0.16;
   }
 
   function markDownloadDone() {
@@ -216,20 +253,12 @@
     noteRate(state.filesDone);
     state.fileTarget = Math.max(state.fileTarget, (state.filesDone / state.filesTotal) * DOWNLOAD_CEILING);
 
-    if (n === 0) {
-      markDownloadDone();
-    } else if (!state.namedFile) {
-      setText(el.status, "Downloading " + state.filesDone + " of " + state.filesTotal + " files");
-    }
+    if (n === 0) markDownloadDone();
 
     checkpoint();
   };
 
-  window.DownloadingFile = function (fileName) {
-    if (!fileName || state.dlDoneAt) return;
-    state.namedFile = true;
-    setText(el.status, "Downloading " + trimFileName(fileName));
-  };
+  window.DownloadingFile = function () {};
 
   window.SetStatusChanged = function (status) {
     var raw = String(status || "").replace(/\.+\s*$/, "").trim();
@@ -246,7 +275,10 @@
       }
     }
 
-    setText(el.status, mapped);
+    if (mapped !== raw) {
+      state.realStatusAt = Date.now();
+      setText(el.status, mapped);
+    }
     checkpoint();
   };
 
@@ -266,14 +298,9 @@
     if (target - state.shown < 0.05) state.shown = target;
     setText(el.pct, Math.floor(state.shown) + "%");
 
-    if (elapsed < T_BEAM_IN) {
-      state.beam = 0;
-    } else if (elapsed < T_BEAM_SET) {
-      var k = (elapsed - T_BEAM_IN) / (T_BEAM_SET - T_BEAM_IN);
-      state.beam = BEAM_MIN * (1 - Math.pow(1 - k, 3));
-    } else {
-      state.beam = approach(state.beam, BEAM_MIN + (1 - BEAM_MIN) * (state.shown / 100), dt, 420);
-    }
+    var floor = beamFloor();
+    var want = floor + (1 - floor) * (state.shown / 100);
+    state.beam = state.beam ? approach(state.beam, want, dt, 420) : want;
 
     var scale = "scaleX(" + state.beam.toFixed(4) + ")";
     if (el.beamL) el.beamL.style.transform = scale;
@@ -297,6 +324,29 @@
   function raf() {
     update();
     window.requestAnimationFrame(raf);
+  }
+
+  /* ---------- loading messages ---------- */
+
+  function startJokes() {
+    if (!el.status) return;
+    var order = JOKES.slice();
+    for (var i = order.length - 1; i > 0; i--) {
+      var j = (Math.random() * (i + 1)) | 0;
+      var tmp = order[i];
+      order[i] = order[j];
+      order[j] = tmp;
+    }
+    var at = 0;
+
+    function next() {
+      if (Date.now() - state.realStatusAt < 5000) return;
+      setText(el.status, order[at % order.length] + "…");
+      at++;
+    }
+
+    next();
+    window.setInterval(next, 4500);
   }
 
   /* ---------- brief ---------- */
@@ -427,16 +477,6 @@
 
   function runDemo() {
     if (state.gotDetails) return;
-    var files = [
-      "materials/models/props_c24/plaza_facade01.vmt",
-      "models/props_c24/streetlamp02.mdl",
-      "sound/ambient/c24/wind_block_loop.wav",
-      "materials/overviews/rp_c24_district2_res.vtf",
-      "models/props_combine/checkpoint_gate01.mdl",
-      "materials/decals/c24/ration_notice.vmt",
-      "models/props_c24/tenement_door03.mdl"
-    ];
-
     window.GameDetails("Singularity Collective", "", "rp_c24_district2_res", 40, "0", "ixhl2rp");
     window.SetFilesTotal(120);
 
@@ -453,15 +493,15 @@
         return;
       }
       window.SetFilesNeeded(left);
-      if (Math.random() < 0.5) {
-        window.DownloadingFile(files[(Math.random() * files.length) | 0]);
-      }
     }, 220);
   }
 
   /* ---------- boot ---------- */
 
   function boot() {
+    startJokes();
+    measureBeam();
+    window.addEventListener("resize", measureBeam);
     startBrief();
     initVideo();
     initMusic();

@@ -11,10 +11,16 @@ the frame, and the mark's own light line carrying the load.
 ## Progress is the light line
 
 The brand mark is a lensed disc with a horizontal light streak running through it. That streak is the
-progress readout. It starts collapsed against the event horizon and extends toward both edges of the
-frame as the client loads, reaching the full width of the screen when the game is ready to start. The
-geometry, gradients and blur radii are taken from `mark-glow.svg` so the line is the brand's own light,
-not a bar drawn next to it.
+progress readout.
+
+At 0% it is exactly the length it is in `mark-glow.svg`, so the mark renders as the finished logo and
+nothing looks half-drawn. As the client loads, the light extends past the mark's own tips and reaches
+the edges of the frame when the game is ready to start. The geometry, gradients, blur radii and
+opacities are taken from the mark itself, so this is the brand's own light growing rather than a bar
+drawn next to it.
+
+The streaks are removed from the inlined SVG and redrawn as two DOM elements purely so progress can
+drive their length. Everything else about the disc — halo, arcs, lens flares, mask — is untouched.
 
 The percentage and the countdown in the bottom bar carry the exact numbers.
 
@@ -37,9 +43,8 @@ Clearing site data resets the estimate to the 42 second default. Nothing else de
 
 | Beat | Time | What happens |
 |------|------|--------------|
-| Ignition | 0.26s | The light line draws outward from a point |
-| Horizon | 0.82s | The disc resolves out of blur at the line's centre |
 | Scene | 0.5s | The map footage fades up behind, near monochrome |
+| Horizon | 0.82s | The mark resolves out of blur, complete, light line and all |
 | Telemetry | 1.7s | Status, countdown and percentage engage |
 | Collapse | 2.0s | The wordmark's letters converge inward, centre letters landing first |
 | Brief | 2.6s | The information panel starts cycling |
@@ -47,6 +52,16 @@ Clearing site data resets the estimate to the 42 second default. Nothing else de
 
 Every reveal is written so its resting state is the visible one and the animation plays *backwards*
 into it. If animations never run, the page is simply fully visible rather than blank.
+
+## Loading messages
+
+The status line runs Half-Life themed messages while the download grinds — "Polishing crowbars",
+"Shelling cities", "Preparing unforeseen consequences" — shuffled per session and rotating every 4.5
+seconds. When a real connection milestone lands (reading server details, sending your details,
+starting the game mode) it takes the line and holds it for five seconds before the messages resume.
+
+Nothing truthful is hidden by this: the percentage and countdown are always live, and the milestones
+always interrupt. Add or edit entries in `JOKES` in `app.js`.
 
 ## Information panel
 

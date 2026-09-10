@@ -53,7 +53,7 @@
   --mark-w: clamp(240px, 29vmin, 430px);
   --beam-inset: calc(var(--mark-w) * 0.109);
   --beam-glow-h: calc(var(--mark-w) * 0.0172);
-  --beam-core-h: calc(var(--mark-w) * 0.0072);
+  --beam-core-h: calc(var(--mark-w) * 0.0055);
   --beam-glow-blur: calc(var(--mark-w) * 0.0156);
   --beam-core-blur: calc(var(--mark-w) * 0.0063);
 
@@ -206,10 +206,11 @@ body {
 .beam {
   position: absolute;
   top: 50%;
-  width: 54vw;
+  width: 55vw;
   height: 0;
   transform: scaleX(0);
   will-change: transform;
+  animation: reveal 1.5s var(--ease) 0.82s backwards, horizon-breath 6s ease-in-out 2.4s infinite;
 }
 
 .beam--l {
@@ -461,6 +462,7 @@ body {
   .wordmark .gl,
   .stamp,
   .brief,
+  .beam,
   .mask--bottom { animation: none; }
   .brief__label,
   .brief__value { transition: none; }

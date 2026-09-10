@@ -85,8 +85,14 @@ One clip and one track are chosen at random per load, so the numbers above are w
 player actually downloads. Re-encode with `ffmpeg -ss 2 -t 90 -an -vf "scale=1600:-2,fps=24" -c:v
 libvpx-vp9 -crf 40 -b:v 0 -row-mt 1 -cpu-used 3 -g 240`.
 
-Inter and JetBrains Mono are served from `assets/fonts/` rather than a CDN, so the page has no external
-requests at all. Only the Latin subset is bundled; the copy is English throughout.
+Inter, JetBrains Mono and Archivo Narrow are served from `assets/fonts/` rather than a CDN, so the page
+has no external requests at all. Only the Latin subset is bundled; the copy is English throughout.
+
+The PRE-ALPHA stamp is set in Archivo Narrow because the brand kit's Arial Narrow is a system font that
+is simply not there on most clients — it silently falls back to the default sans, which renders the
+stamp much wider and looser than intended. Archivo Narrow is the closest self-hostable equivalent, so
+the stamp now looks the same on every machine. The kit makes the same concession for its PNG
+watermarks, where the stamp text is baked in precisely so it needs no fonts.
 
 ## Development
 

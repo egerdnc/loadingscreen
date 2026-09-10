@@ -23,14 +23,6 @@
 }
 
 @font-face {
-  font-family: "Archivo Narrow";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("assets/fonts/archivo-narrow-700.woff2") format("woff2");
-}
-
-@font-face {
   font-family: "JetBrains Mono";
   font-style: normal;
   font-weight: 400;
@@ -57,7 +49,6 @@
 
   --ui: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, Consolas, "Liberation Mono", monospace;
-  --narrow: "Archivo Narrow", "Arial Narrow", Arial, sans-serif;
 
   --mark-w: clamp(240px, 29vmin, 430px);
   --beam-inset: calc(var(--mark-w) * 0.109);
@@ -287,17 +278,19 @@ body {
 
 .stamp {
   margin-top: calc(var(--mark-w) * 0.075);
-  padding: 0.3em 0.82em;
-  font-family: var(--narrow);
+  padding: 0.6em 0.92em;
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-indent: 0.2em;
   color: var(--signal);
   background: var(--stamp);
-  -webkit-font-smoothing: auto;
   box-shadow: 0 3px 16px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(0, 0, 0, 0.28);
   animation: stamp-set 0.5s var(--ease) 3.05s backwards;
+}
+
+.stamp__t {
+  display: block;
+  height: 0.686em;
+  width: calc(0.686em * 9.3047);
+  fill: currentColor;
 }
 
 /* ---------- brief ---------- */

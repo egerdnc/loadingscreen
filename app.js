@@ -4,12 +4,23 @@
   var el = {
     video: document.getElementById("bg"),
     bgm: document.getElementById("bgm"),
-    info: document.getElementById("info"),
+    beamL: document.getElementById("beamL"),
+    beamR: document.getElementById("beamR"),
+    brief: document.getElementById("brief"),
+    briefLabel: document.getElementById("briefLabel"),
+    briefValue: document.getElementById("briefValue"),
+    status: document.getElementById("status"),
     eta: document.getElementById("eta"),
-    pct: document.getElementById("loaderPct"),
-    fill: document.getElementById("progressFill"),
-    status: document.getElementById("status")
+    pct: document.getElementById("pct")
   };
+
+  var T_SCENE = 500;
+  var T_BEAM_IN = 260;
+  var T_BEAM_SET = 1150;
+  var BEAM_MIN = 0.11;
+  var DOWNLOAD_CEILING = 68;
+  var DEFAULT_TAIL = 42000;
+  var MUSIC_VOLUME = 0.07;
 
   var VIDEOS = [
     "assets/plaza.webm",
@@ -30,43 +41,101 @@
     "assets/precipice.mp3"
   ];
 
-  var MUSIC_VOLUME = 0.07;
-
-  var INFO = [
-    "Community — <b>discord.gg/singularity</b>",
-    "Whitelist, characters and achievements — <b>portal.singularity-community.com</b>",
-    "Rules and announcements — on the <b>Discord</b>",
-    "Closed <b>pre-alpha</b> — expect changes, report issues on the Discord",
-    "<b>Singularity Collective</b> — a semi-serious HL2RP community",
-    "Built on <b>Helix</b> with a fully custom schema",
-    "Dozens of systems built <b>in-house</b> for this server",
-    "One Steam account links to one Discord — <b>link yours on the portal</b>",
-    "Need help? Open a <b>support ticket</b> on the portal",
-    "<b>Achievements</b> unlock across the server, portal and Discord",
-    "In active development — expect <b>frequent updates</b>"
+  var BRIEF = [
+    { label: "COMMUNITY", value: "<b>discord.gg/singularity</b>" },
+    { label: "PLAYER PORTAL", value: "Characters, whitelist and achievements live at <b>portal.singularity-community.com</b>" },
+    { label: "RULES", value: "Read them on the Discord before you play" },
+    { label: "BUILD", value: "Closed <b>pre-alpha</b>. Systems change between sessions" },
+    { label: "ACCOUNTS", value: "One Steam account links to one Discord account" },
+    { label: "SUPPORT", value: "Open a ticket on the portal instead of messaging staff directly" },
+    { label: "REPORTING", value: "Bugs and player reports go to the Discord" },
+    { label: "PLATFORM", value: "Helix framework, running a schema written for this server" },
+    { label: "UPDATES", value: "Patch notes are posted in the Discord as they ship" },
+    { label: "ACHIEVEMENTS", value: "Earn them in game, track them on the portal" }
   ];
 
-  var STATUS_FLOORS = [
-    { match: "workshop complete", floor: 80 },
-    { match: "retrieving server info", floor: 82 },
-    { match: "connecting to server", floor: 84 },
-    { match: "receiving server info", floor: 86 },
-    { match: "sending client info", floor: 90 },
-    { match: "client info sent", floor: 93 },
-    { match: "starting lua", floor: 95 },
-    { match: "lua", floor: 95 },
-    { match: "spawn", floor: 98 }
+  var STATUS_MAP = [
+    ["workshop complete", "Add-ons ready", 70],
+    ["workshop", "Mounting add-ons", 66],
+    ["mounting", "Mounting add-ons", 70],
+    ["retrieving server info", "Reading server details", 74],
+    ["receiving server info", "Reading server details", 76],
+    ["connecting to server", "Connecting", 78],
+    ["sending client info", "Sending your details", 82],
+    ["client info sent", "Details accepted", 86],
+    ["receiving client info", "Details accepted", 86],
+    ["precach", "Preparing the map", 90],
+    ["starting lua", "Starting the game mode", 94],
+    ["lua", "Starting the game mode", 94],
+    ["spawn", "Joining the server", 98]
   ];
 
   var state = {
+    t0: Date.now(),
     filesTotal: 0,
     filesDone: 0,
-    target: 4,
+    fileTarget: 0,
+    statusFloor: 0,
     shown: 0,
-    floor: 0,
+    dlDoneAt: 0,
     gotDetails: false,
-    finished: false
+    namedFile: false,
+    videoFailed: false,
+    beam: 0,
+    etaShown: null,
+    lastFrame: 0,
+    lastWrite: 0
   };
+
+  var rate = { at: 0, done: 0, perMs: 0 };
+
+  /* ---------- storage ---------- */
+
+  function readJSON(key, fallback) {
+    try {
+      var raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function writeJSON(key, value) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {}
+  }
+
+  var tails = readJSON("sing.tails", []);
+  if (!(tails instanceof Array)) tails = [];
+
+  (function inheritPreviousSession() {
+    var prev = readJSON("sing.session", null);
+    if (prev && prev.dl > 0 && prev.last > prev.dl) {
+      var tail = prev.last - prev.dl;
+      if (tail > 3000 && tail < 600000) {
+        tails.push(tail);
+        tails = tails.slice(-5);
+        writeJSON("sing.tails", tails);
+      }
+    }
+    writeJSON("sing.session", { dl: 0, last: Date.now() });
+  })();
+
+  function checkpoint() {
+    var now = Date.now();
+    if (state.shown >= 97 || now - state.lastWrite < 500) return;
+    state.lastWrite = now;
+    writeJSON("sing.session", { dl: state.dlDoneAt, last: now });
+  }
+
+  function tailEstimate() {
+    if (!tails.length) return DEFAULT_TAIL;
+    var sorted = tails.slice().sort(function (a, b) { return a - b; });
+    return sorted[Math.floor(sorted.length / 2)];
+  }
+
+  /* ---------- helpers ---------- */
 
   function setText(node, txt) {
     if (node) node.textContent = txt == null ? "" : String(txt);
@@ -76,89 +145,184 @@
     return String(s || "").toLowerCase();
   }
 
-  function render() {
-    var pct = Math.max(0, Math.min(100, state.shown));
-    if (el.fill) el.fill.style.width = pct + "%";
-    setText(el.pct, Math.floor(pct) + "%");
-  }
-
-  function tick() {
-    if (state.floor < 76) {
-      state.floor = Math.min(76, state.floor + 0.018);
-    }
-    var target = Math.max(state.target, state.floor);
-    state.shown += (target - state.shown) * 0.055;
-    if (target - state.shown < 0.05) state.shown = target;
-    render();
-  }
-
-  function fileProgress() {
-    if (state.filesTotal <= 0) return;
-    var done = Math.max(0, Math.min(state.filesTotal, state.filesDone));
-    state.target = Math.max(state.target, (done / state.filesTotal) * 80);
+  function approach(current, target, dt, tau) {
+    return current + (target - current) * (1 - Math.exp(-dt / tau));
   }
 
   function trimFileName(name) {
     var parts = String(name || "").replace(/\\/g, "/").split("/");
-    if (parts.length > 2) parts = parts.slice(parts.length - 2);
+    if (parts.length > 3) parts = parts.slice(parts.length - 3);
     return parts.join("/");
   }
 
-  window.GameDetails = function (servername, serverurl, mapname, maxplayers, steamid, gamemode) {
+  function markDownloadDone() {
+    if (!state.dlDoneAt) state.dlDoneAt = Date.now();
+  }
+
+  /* ---------- eta ---------- */
+
+  function noteRate(done) {
+    var now = Date.now();
+    if (!rate.at) {
+      rate.at = now;
+      rate.done = done;
+      return;
+    }
+    if (done <= rate.done) return;
+    var dt = now - rate.at;
+    if (dt < 150) return;
+    var inst = (done - rate.done) / dt;
+    rate.perMs = rate.perMs ? rate.perMs * 0.8 + inst * 0.2 : inst;
+    rate.at = now;
+    rate.done = done;
+  }
+
+  function etaSeconds() {
+    var tail = tailEstimate();
+    if (state.dlDoneAt) {
+      return Math.max(0, state.dlDoneAt + tail - Date.now()) / 1000;
+    }
+    if (state.filesTotal > 0 && rate.perMs > 0) {
+      var remaining = Math.max(0, state.filesTotal - state.filesDone);
+      return (remaining / rate.perMs + tail) / 1000;
+    }
+    return null;
+  }
+
+  function formatEta(seconds) {
+    if (seconds < 3) return "any moment";
+    var total = Math.round(seconds);
+    var m = Math.floor(total / 60);
+    var s = total % 60;
+    return "ETA " + m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  /* ---------- gmod hooks ---------- */
+
+  window.GameDetails = function () {
     state.gotDetails = true;
   };
 
-  function startInfoLoop() {
-    if (!el.info) return;
-    var i = (Math.random() * INFO.length) | 0;
-    function show() {
-      el.info.innerHTML = INFO[i % INFO.length];
-      el.info.style.opacity = "1";
-      i++;
-      setTimeout(hide, 6200);
-    }
-    function hide() {
-      el.info.style.opacity = "0";
-      setTimeout(show, 800);
-    }
-    setTimeout(show, 2200);
-  }
-
   window.SetFilesTotal = function (total) {
     var n = parseInt(total, 10);
-    if (!isNaN(n) && n > 0) {
-      state.filesTotal = n;
-      fileProgress();
-    }
+    if (!isNaN(n) && n > 0) state.filesTotal = n;
   };
 
   window.SetFilesNeeded = function (needed) {
     var n = parseInt(needed, 10);
-    if (isNaN(n) || n < 0) return;
-    if (state.filesTotal > 0) {
-      state.filesDone = state.filesTotal - n;
-      fileProgress();
-      setText(el.status, "Downloading assets — " + state.filesDone + " of " + state.filesTotal);
+    if (isNaN(n) || n < 0 || state.filesTotal <= 0) return;
+
+    state.filesDone = Math.max(state.filesDone, state.filesTotal - n);
+    noteRate(state.filesDone);
+    state.fileTarget = Math.max(state.fileTarget, (state.filesDone / state.filesTotal) * DOWNLOAD_CEILING);
+
+    if (n === 0) {
+      markDownloadDone();
+    } else if (!state.namedFile) {
+      setText(el.status, "Downloading " + state.filesDone + " of " + state.filesTotal + " files");
     }
+
+    checkpoint();
   };
 
   window.DownloadingFile = function (fileName) {
-    state.filesDone++;
-    fileProgress();
+    if (!fileName || state.dlDoneAt) return;
+    state.namedFile = true;
     setText(el.status, "Downloading " + trimFileName(fileName));
   };
 
   window.SetStatusChanged = function (status) {
-    var s = String(status || "").replace(/\.+\s*$/, "");
-    var n = norm(s);
-    for (var i = 0; i < STATUS_FLOORS.length; i++) {
-      if (n.indexOf(STATUS_FLOORS[i].match) !== -1) {
-        state.target = Math.max(state.target, STATUS_FLOORS[i].floor);
+    var raw = String(status || "").replace(/\.+\s*$/, "").trim();
+    if (!raw) return;
+    var n = norm(raw);
+    var mapped = raw;
+
+    for (var i = 0; i < STATUS_MAP.length; i++) {
+      if (n.indexOf(STATUS_MAP[i][0]) !== -1) {
+        mapped = STATUS_MAP[i][1];
+        if (STATUS_MAP[i][2] >= 70) markDownloadDone();
+        state.statusFloor = Math.max(state.statusFloor, STATUS_MAP[i][2]);
         break;
       }
     }
-    if (s) setText(el.status, s);
+
+    setText(el.status, mapped);
+    checkpoint();
   };
+
+  /* ---------- frame loop ---------- */
+
+  function update() {
+    var now = Date.now();
+    var dt = state.lastFrame ? Math.min(250, now - state.lastFrame) : 16;
+    state.lastFrame = now;
+    if (dt <= 0) return;
+
+    var elapsed = now - state.t0;
+    var creep = 64 * (1 - Math.exp(-elapsed / 45000));
+    var target = Math.min(100, Math.max(state.fileTarget, state.statusFloor, creep));
+
+    state.shown = approach(state.shown, target, dt, 300);
+    if (target - state.shown < 0.05) state.shown = target;
+    setText(el.pct, Math.floor(state.shown) + "%");
+
+    if (elapsed < T_BEAM_IN) {
+      state.beam = 0;
+    } else if (elapsed < T_BEAM_SET) {
+      var k = (elapsed - T_BEAM_IN) / (T_BEAM_SET - T_BEAM_IN);
+      state.beam = BEAM_MIN * (1 - Math.pow(1 - k, 3));
+    } else {
+      state.beam = approach(state.beam, BEAM_MIN + (1 - BEAM_MIN) * (state.shown / 100), dt, 420);
+    }
+
+    var scale = "scaleX(" + state.beam.toFixed(4) + ")";
+    if (el.beamL) el.beamL.style.transform = scale;
+    if (el.beamR) el.beamR.style.transform = scale;
+
+    var secs = etaSeconds();
+    if (secs === null) {
+      if (el.eta) el.eta.className = "tele tele__eta";
+    } else {
+      if (state.etaShown === null) {
+        state.etaShown = secs;
+      } else {
+        state.etaShown = Math.max(0, state.etaShown - dt / 1000);
+        state.etaShown = approach(state.etaShown, secs, dt, 4000);
+      }
+      setText(el.eta, formatEta(state.etaShown));
+      if (el.eta) el.eta.className = "tele tele__eta is-on";
+    }
+  }
+
+  function raf() {
+    update();
+    window.requestAnimationFrame(raf);
+  }
+
+  /* ---------- brief ---------- */
+
+  function startBrief() {
+    if (!el.brief) return;
+    var i = (Math.random() * BRIEF.length) | 0;
+
+    function paint() {
+      var item = BRIEF[i % BRIEF.length];
+      setText(el.briefLabel, item.label);
+      el.briefValue.innerHTML = item.value;
+      i++;
+    }
+
+    paint();
+    window.setInterval(function () {
+      el.brief.className = "brief is-turning";
+      window.setTimeout(function () {
+        paint();
+        el.brief.className = "brief";
+      }, 560);
+    }, 7400);
+  }
+
+  /* ---------- media ---------- */
 
   function pick(list, notSrc) {
     if (!list.length) return "";
@@ -171,29 +335,57 @@
     return choice;
   }
 
+  function revealScene() {
+    if (!el.video || state.videoFailed) return;
+    var wait = Math.max(0, T_SCENE - (Date.now() - state.t0));
+    window.setTimeout(function () {
+      el.video.className = "scene__v is-live";
+    }, wait);
+  }
+
+  function ensurePlaying(node, attempts) {
+    if (!node || attempts <= 0) return;
+    var p = null;
+    try { p = node.play(); } catch (e) {}
+    if (p && typeof p.then === "function") {
+      p.then(null, function () {
+        window.setTimeout(function () { ensurePlaying(node, attempts - 1); }, 400);
+      });
+    } else if (node.paused) {
+      window.setTimeout(function () { ensurePlaying(node, attempts - 1); }, 400);
+    }
+  }
+
   function initVideo() {
     if (!el.video) return;
-    el.video.src = pick(VIDEOS);
     el.video.loop = true;
     el.video.muted = true;
+    el.video.defaultMuted = true;
     el.video.addEventListener("canplay", function () {
-      el.video.className = "scene__video is-live";
+      revealScene();
+      if (el.video.paused) ensurePlaying(el.video, 12);
     });
     el.video.addEventListener("error", function () {
-      el.video.className = "scene__video";
+      state.videoFailed = true;
+      el.video.className = "scene__v";
     });
+    el.video.src = pick(VIDEOS);
     try { el.video.load(); } catch (e) {}
-    var p = null;
-    try { p = el.video.play(); } catch (e) {}
-    if (p && typeof p.then === "function") p.then(null, function () {});
+    ensurePlaying(el.video, 12);
+
+    window.setInterval(function () {
+      if (!state.videoFailed && el.video.paused && el.video.readyState >= 2) {
+        ensurePlaying(el.video, 1);
+      }
+    }, 3000);
   }
 
   function rampMusic() {
-    var t0 = Date.now();
-    var iv = setInterval(function () {
-      var k = Math.min(1, (Date.now() - t0) / 2500);
+    var from = Date.now();
+    var iv = window.setInterval(function () {
+      var k = Math.min(1, (Date.now() - from) / 2600);
       try { el.bgm.volume = MUSIC_VOLUME * k; } catch (e) {}
-      if (k >= 1) clearInterval(iv);
+      if (k >= 1) window.clearInterval(iv);
     }, 100);
   }
 
@@ -205,7 +397,9 @@
     var p = null;
     try { p = el.bgm.play(); } catch (e) {}
     if (p && typeof p.then === "function") {
-      p.then(rampMusic, function () {});
+      p.then(rampMusic, function () {
+        window.setTimeout(function () { ensurePlaying(el.bgm, 6); }, 500);
+      });
     } else {
       rampMusic();
     }
@@ -217,53 +411,66 @@
     el.bgm.onended = function () {
       playTrack(pick(MUSIC, el.bgm.currentSrc));
     };
-    setTimeout(function () {
+
+    var started = false;
+    function start() {
+      if (started) return;
+      started = true;
       playTrack(pick(MUSIC));
-    }, 700);
+    }
+
+    if (el.video) el.video.addEventListener("canplay", start);
+    window.setTimeout(start, 4000);
   }
+
+  /* ---------- demo ---------- */
 
   function runDemo() {
     if (state.gotDetails) return;
-    window.GameDetails("Singularity Collective", "", "rp_c24_district2_res", 40, "0", "ixhl2rp");
-    var demoFiles = [
+    var files = [
       "materials/models/props_c24/plaza_facade01.vmt",
       "models/props_c24/streetlamp02.mdl",
       "sound/ambient/c24/wind_block_loop.wav",
       "materials/overviews/rp_c24_district2_res.vtf",
       "models/props_combine/checkpoint_gate01.mdl",
       "materials/decals/c24/ration_notice.vmt",
-      "sound/music/singularity_theme.mp3",
       "models/props_c24/tenement_door03.mdl"
     ];
-    window.SetFilesTotal(96);
-    var left = 96;
-    var iv = setInterval(function () {
+
+    window.GameDetails("Singularity Collective", "", "rp_c24_district2_res", 40, "0", "ixhl2rp");
+    window.SetFilesTotal(120);
+
+    var left = 120;
+    var iv = window.setInterval(function () {
       left -= 1 + ((Math.random() * 3) | 0);
       if (left <= 0) {
-        clearInterval(iv);
+        window.clearInterval(iv);
         window.SetFilesNeeded(0);
-        setTimeout(function () { window.SetStatusChanged("Workshop Complete"); }, 500);
-        setTimeout(function () { window.SetStatusChanged("Retrieving server info..."); }, 1400);
-        setTimeout(function () { window.SetStatusChanged("Sending client info..."); }, 3000);
-        setTimeout(function () { window.SetStatusChanged("Starting Lua..."); }, 4600);
+        window.setTimeout(function () { window.SetStatusChanged("Workshop Complete"); }, 400);
+        window.setTimeout(function () { window.SetStatusChanged("Retrieving server info..."); }, 2200);
+        window.setTimeout(function () { window.SetStatusChanged("Sending client info..."); }, 5200);
+        window.setTimeout(function () { window.SetStatusChanged("Starting Lua..."); }, 9000);
         return;
       }
       window.SetFilesNeeded(left);
-      if (Math.random() < 0.6) {
-        window.DownloadingFile(demoFiles[(Math.random() * demoFiles.length) | 0]);
-        state.filesDone--;
+      if (Math.random() < 0.5) {
+        window.DownloadingFile(files[(Math.random() * files.length) | 0]);
       }
-    }, 140);
+    }, 220);
   }
 
+  /* ---------- boot ---------- */
+
   function boot() {
-    render();
+    startBrief();
     initVideo();
     initMusic();
-    startInfoLoop();
-    setInterval(tick, 100);
-    var forceDemo = window.location.search.indexOf("demo") !== -1;
-    setTimeout(runDemo, forceDemo ? 300 : 2500);
+    window.setInterval(update, 40);
+    window.requestAnimationFrame(raf);
+
+    if (window.location.search.indexOf("demo") !== -1) {
+      window.setTimeout(runDemo, 400);
+    }
   }
 
   if (document.readyState === "loading") {
